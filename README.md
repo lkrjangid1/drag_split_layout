@@ -17,6 +17,7 @@ A Flutter package for creating resizable split-pane layouts with drag-and-drop s
 - **Mobile Support** - Long-press dragging on touch devices
 - **Customizable Styling** - Configure colors, borders, animations, and more
 
+<img src='https://github.com/user-attachments/assets/65beced3-22c4-4424-a0e4-e0a8c6ed0a63'>
 
 ## Installation
 
