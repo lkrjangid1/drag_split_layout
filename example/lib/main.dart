@@ -127,6 +127,7 @@ class _LayoutEditorDemoState extends State<LayoutEditorDemo> {
         SplitNode.leaf(
           id: 'initial_editor',
           widgetBuilder: (_) => const PanelWidget(
+            nodeId: 'initial_editor',
             title: 'Code Editor',
             icon: Icons.code,
             color: Colors.teal,
@@ -135,6 +136,7 @@ class _LayoutEditorDemoState extends State<LayoutEditorDemo> {
         SplitNode.leaf(
           id: 'initial_preview',
           widgetBuilder: (_) => const PanelWidget(
+            nodeId: 'initial_preview',
             title: 'Preview',
             icon: Icons.visibility,
             color: Colors.orange,
@@ -149,6 +151,7 @@ class _LayoutEditorDemoState extends State<LayoutEditorDemo> {
     return SplitNode.leaf(
       id: id,
       widgetBuilder: (_) => PanelWidget(
+        nodeId: id,
         title: item.title,
         icon: item.icon,
         color: item.color,
@@ -423,11 +426,8 @@ class _PaletteDropTargetState extends State<_PaletteDropTarget> {
           ),
         ),
       ),
-      onNodeDropped: (draggedItem, preview, targetNode) {
-        // This handles internal drag-drop between existing panes
-        // Return null to use default behavior
-        return null;
-      },
+      // Don't provide onNodeDropped - let the default behavior handle
+      // internal drag-drop between existing panes
     );
   }
 }
@@ -436,11 +436,13 @@ class _PaletteDropTargetState extends State<_PaletteDropTarget> {
 class PanelWidget extends StatelessWidget {
   const PanelWidget({
     super.key,
+    required this.nodeId,
     required this.title,
     required this.icon,
     required this.color,
   });
 
+  final String nodeId;
   final String title;
   final IconData icon;
   final Color color;
@@ -453,6 +455,7 @@ class PanelWidget extends StatelessWidget {
     final borderColor = color.withValues(alpha: 0.3);
 
     return _PanelDropTarget(
+      nodeId: nodeId,
       title: title,
       icon: icon,
       color: color,
@@ -495,31 +498,37 @@ class PanelWidget extends StatelessWidget {
             // Content
             Expanded(
               child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      icon,
-                      size: 48,
-                      color: color.withValues(alpha: 0.4),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          icon,
+                          size: 48,
+                          color: color.withValues(alpha: 0.4),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: color.withValues(alpha: 0.7),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Drag to rearrange',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: color.withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: color.withValues(alpha: 0.7),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Drag to rearrange',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: color.withValues(alpha: 0.5),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -538,12 +547,14 @@ class PanelWidget extends StatelessWidget {
 /// Drop target wrapper for panels to accept palette items
 class _PanelDropTarget extends StatefulWidget {
   const _PanelDropTarget({
+    required this.nodeId,
     required this.title,
     required this.icon,
     required this.color,
     required this.child,
   });
 
+  final String nodeId;
   final String title;
   final IconData icon;
   final Color color;
@@ -610,9 +621,8 @@ class _PanelDropTargetState extends State<_PanelDropTarget> {
     final controller = _findController(context);
     if (controller == null) return;
 
-    // Find this panel's node in the tree
-    final rootNode = controller.rootNode;
-    final panelPath = _findPanelPath(rootNode, widget.title);
+    // Find this panel's path using its node ID
+    final panelPath = controller.findPathById(widget.nodeId);
     if (panelPath == null) return;
 
     // Create new node from palette item
@@ -621,11 +631,14 @@ class _PanelDropTargetState extends State<_PanelDropTarget> {
     final newNode = SplitNode.leaf(
       id: newNodeId,
       widgetBuilder: (_) => PanelWidget(
+        nodeId: newNodeId,
         title: item.title,
         icon: item.icon,
         color: item.color,
       ),
     );
+
+    final rootNode = controller.rootNode;
 
     // Apply the drop based on zone
     if (zone == DropZone.center) {
@@ -662,26 +675,6 @@ class _PanelDropTargetState extends State<_PanelDropTarget> {
       return true;
     });
     return controller;
-  }
-
-  List<int>? _findPanelPath(SplitNode node, String title, [List<int>? path]) {
-    path ??= [];
-
-    if (node.isLeaf) {
-      // Check if this node's widget builder creates a panel with matching title
-      // We need to match by examining the node
-      return path;
-    }
-
-    for (var i = 0; i < node.children.length; i++) {
-      final childPath = _findPanelPath(node.children[i], title, [...path, i]);
-      if (childPath != null) {
-        // For simplicity, return the first leaf path
-        // In production, you'd want more sophisticated matching
-      }
-    }
-
-    return null;
   }
 
   Widget _buildDropPreview() {
