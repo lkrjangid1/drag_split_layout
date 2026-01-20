@@ -1,9 +1,15 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-/// Represents the axis direction for a split
+/// Represents the axis direction for a split.
+///
+/// Used to specify whether child nodes should be arranged
+/// horizontally (side by side) or vertically (stacked).
 enum SplitAxis {
+  /// Children are arranged horizontally (side by side).
   horizontal,
+
+  /// Children are arranged vertically (stacked top to bottom).
   vertical;
 
   /// Converts to MultiSplitView's Axis

@@ -13,11 +13,24 @@ enum DropAction {
 }
 
 /// The zone where the pointer is hovering within a pane.
+///
+/// Drop zones determine what happens when an item is dropped:
+/// - Edge zones (left, right, top, bottom) result in splitting the pane
+/// - Center zone results in replacing the pane content
 enum DropZone {
+  /// Left edge zone - splits horizontally, inserts new item on the left.
   left,
+
+  /// Right edge zone - splits horizontally, inserts new item on the right.
   right,
+
+  /// Top edge zone - splits vertically, inserts new item above.
   top,
+
+  /// Bottom edge zone - splits vertically, inserts new item below.
   bottom,
+
+  /// Center zone - replaces the target pane content.
   center;
 
   /// Whether this zone results in a horizontal split

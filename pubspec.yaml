@@ -1,11 +1,23 @@
 name: drag_split_layout
-description: Emphasizes drag + split behavior
-version: 0.1.0+1
-publish_to: none
+description: >-
+  A Flutter package for creating resizable split-pane layouts with drag-and-drop
+  support. Easily rearrange, split, and replace panes with intuitive gestures
+  and visual drop previews.
+version: 0.1.0
+homepage: https://github.com/lkrjangid1/drag_split_layout
+repository: https://github.com/lkrjangid1/drag_split_layout
+issue_tracker: https://github.com/lkrjangid1/drag_split_layout/issues
+
+topics:
+  - layout
+  - drag-and-drop
+  - split-view
+  - resizable
+  - ui
 
 environment:
   sdk: ^3.5.0
-  flutter: ^3.24.0
+  flutter: ">=3.24.0"
 
 dependencies:
   flutter:
