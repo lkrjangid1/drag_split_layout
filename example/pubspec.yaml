@@ -1,0 +1,21 @@
+name: drag_split_layout_example
+description: Example app demonstrating drag_split_layout package
+publish_to: none
+
+environment:
+  sdk: ^3.5.0
+  flutter: ^3.24.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  drag_split_layout:
+    path: ../
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
