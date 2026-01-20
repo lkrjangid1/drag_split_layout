@@ -68,6 +68,7 @@ class EditableMultiSplitView extends StatefulWidget {
 
 class _EditableMultiSplitViewState extends State<EditableMultiSplitView> {
   final Map<String, MultiSplitViewController> _controllers = {};
+  Set<String> _usedControllerIds = {};
 
   @override
   void dispose() {
@@ -77,15 +78,34 @@ class _EditableMultiSplitViewState extends State<EditableMultiSplitView> {
     super.dispose();
   }
 
+  void _cleanupUnusedControllers() {
+    final unusedIds = _controllers.keys
+        .where((id) => !_usedControllerIds.contains(id))
+        .toList();
+    for (final id in unusedIds) {
+      _controllers[id]?.dispose();
+      _controllers.remove(id);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: widget.controller,
       builder: (context, _) {
-        return _buildNode(
+        // Track which controllers are used in this build
+        _usedControllerIds = {};
+        final result = _buildNode(
           widget.controller.rootNode,
           [],
         );
+        // Schedule cleanup of unused controllers after frame
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            _cleanupUnusedControllers();
+          }
+        });
+        return result;
       },
     );
   }
@@ -139,6 +159,7 @@ class _EditableMultiSplitViewState extends State<EditableMultiSplitView> {
     }
 
     return MultiSplitView(
+      key: ValueKey('msv_${node.id}'),
       controller: controller,
       axis: node.axis!.toAxis(),
       dividerBuilder: (
@@ -171,6 +192,9 @@ class _EditableMultiSplitViewState extends State<EditableMultiSplitView> {
   }
 
   MultiSplitViewController _getOrCreateController(SplitNode node) {
+    // Mark this controller as used in the current build
+    _usedControllerIds.add(node.id);
+
     if (!_controllers.containsKey(node.id)) {
       final areas = node.children.map((child) {
         return Area(flex: child.flex);
