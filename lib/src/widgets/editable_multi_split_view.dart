@@ -158,36 +158,39 @@ class _EditableMultiSplitViewState extends State<EditableMultiSplitView> {
       controller.areas = areas;
     }
 
-    return MultiSplitView(
-      key: ValueKey('msv_${node.id}'),
-      controller: controller,
-      axis: node.axis!.toAxis(),
-      dividerBuilder: (
-        axis,
-        index,
-        resizable,
-        dragging,
-        highlighted,
-        themeData,
-      ) {
-        return _buildDivider(
-          context,
+    return MultiSplitViewTheme(
+      data: MultiSplitViewThemeData(
+          dividerThickness: widget.config.dividerThickness),
+      child: MultiSplitView(
+        key: ValueKey('msv_${node.id}'),
+        controller: controller,
+        axis: node.axis!.toAxis(),
+        dividerBuilder: (
           axis,
+          index,
           resizable,
           dragging,
           highlighted,
-        );
-      },
-      antiAliasingWorkaround: widget.config.antiAliasingWorkaround,
-      builder: (context, area) {
-        // Find the index of this area in the controller
-        final index = controller.areas.indexOf(area);
-        if (index < 0 || index >= node.children.length) {
-          return const SizedBox.shrink();
-        }
-        final childPath = [...path, index];
-        return _buildNode(node.children[index], childPath);
-      },
+          themeData,
+        ) {
+          return _buildDivider(
+            context,
+            axis,
+            resizable,
+            dragging,
+            highlighted,
+          );
+        },
+        antiAliasingWorkaround: widget.config.antiAliasingWorkaround,
+        builder: (context, area) {
+          final index = controller.areas.indexOf(area);
+          if (index < 0 || index >= node.children.length) {
+            return const SizedBox.shrink();
+          }
+          final childPath = [...path, index];
+          return _buildNode(node.children[index], childPath);
+        },
+      ),
     );
   }
 

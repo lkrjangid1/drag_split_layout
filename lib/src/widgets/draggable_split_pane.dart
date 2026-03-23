@@ -15,7 +15,7 @@ class DraggablePaneConfig {
     this.useLongPressOnMobile = true,
     this.longPressDuration = const Duration(milliseconds: 300),
     this.previewStyle = const DropPreviewStyle(),
-    this.dragHandleBuilder,
+    this.useDragHandle = false,
   });
 
   /// Opacity of the drag feedback widget.
@@ -33,9 +33,65 @@ class DraggablePaneConfig {
   /// Style configuration for the drop preview.
   final DropPreviewStyle previewStyle;
 
-  /// Optional builder for a custom drag handle.
-  /// If null, the entire pane is draggable.
-  final Widget Function(BuildContext context)? dragHandleBuilder;
+  /// When true, the entire pane is NOT draggable by default.
+  /// Instead, place a [DragHandle] widget inside the pane's child tree
+  /// to define the draggable area.
+  final bool useDragHandle;
+}
+
+// ---------------------------------------------------------------------------
+// Drag handle scope — provides drag data to [DragHandle] widgets in the tree.
+// ---------------------------------------------------------------------------
+
+class _DragHandleScope extends InheritedWidget {
+  const _DragHandleScope({
+    required this.dragData,
+    required this.feedbackBuilder,
+    required this.onDragStarted,
+    required this.onDragEnd,
+    required super.child,
+  });
+
+  final DragItemModel dragData;
+  final Widget Function(BuildContext context) feedbackBuilder;
+  final VoidCallback onDragStarted;
+  final void Function(DraggableDetails) onDragEnd;
+
+  static _DragHandleScope? of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_DragHandleScope>();
+
+  @override
+  bool updateShouldNotify(_DragHandleScope old) => dragData != old.dragData;
+}
+
+/// A widget that makes its [child] a drag handle for the enclosing
+/// [DraggableSplitPane] (only active when [DraggablePaneConfig.useDragHandle]
+/// is true).
+///
+/// Place this inside a pane's child to restrict dragging to a specific area.
+class DragHandle extends StatelessWidget {
+  const DragHandle({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final scope = _DragHandleScope.of(context);
+    if (scope == null) return child;
+
+    return Draggable<DragItemModel>(
+      data: scope.dragData,
+      feedback: scope.feedbackBuilder(context),
+      childWhenDragging: Opacity(opacity: 0.3, child: child),
+      onDragStarted: scope.onDragStarted,
+      onDragEnd: scope.onDragEnd,
+      dragAnchorStrategy: pointerDragAnchorStrategy,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.grab,
+        child: child,
+      ),
+    );
+  }
 }
 
 /// A wrapper widget that makes a pane draggable and acts as a drop target.
@@ -127,7 +183,17 @@ class _DraggableSplitPaneState extends State<DraggableSplitPane> {
 
     Widget draggableContent;
 
-    if (_useLongPress) {
+    if (widget.config.useDragHandle) {
+      // Provide drag data via scope; DragHandle widgets inside the tree
+      // will create the actual Draggable in the desired sub-area.
+      draggableContent = _DragHandleScope(
+        dragData: _dragData,
+        feedbackBuilder: _buildDragFeedback,
+        onDragStarted: _onDragStarted,
+        onDragEnd: _onDragEnd,
+        child: content,
+      );
+    } else if (_useLongPress) {
       draggableContent = LongPressDraggable<DragItemModel>(
         data: _dragData,
         delay: widget.config.longPressDuration,
