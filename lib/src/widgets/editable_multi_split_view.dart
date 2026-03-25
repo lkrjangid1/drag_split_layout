@@ -220,8 +220,25 @@ class _EditableMultiSplitViewState extends State<EditableMultiSplitView> {
         ? theme.colorScheme.primary
         : theme.colorScheme.outline.withValues(alpha: 0.3);
 
-    return ColoredBox(
-      color: color,
+    final borderWidth = widget.config.dividerThickness / 8;
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          left: axis == Axis.vertical
+              ? BorderSide(color: color, width: borderWidth)
+              : BorderSide.none,
+          right: axis == Axis.vertical
+              ? BorderSide(color: color, width: borderWidth)
+              : BorderSide.none,
+          top: axis == Axis.horizontal
+              ? BorderSide(color: color, width: borderWidth)
+              : BorderSide.none,
+          bottom: axis == Axis.horizontal
+              ? BorderSide(color: color, width: borderWidth)
+              : BorderSide.none,
+        ),
+      ),
       child: axis == Axis.horizontal
           ? SizedBox(width: widget.config.dividerThickness)
           : SizedBox(height: widget.config.dividerThickness),
